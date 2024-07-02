@@ -12,6 +12,7 @@ import { FlatList } from 'react-native-gesture-handler';
 export default function App() {
 
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  const request = new XMLHttpRequest();
 
   const [image, setImage] = useState("");
   const [picture, setPicture] = useState("");
@@ -40,15 +41,20 @@ export default function App() {
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       quality: 1,
     })
-    console.log(result);
+    console.log("result:", result);
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
     }
   }
 
+  const testPost = async() => {    
+
+    console.log("image:", image);
+    }
+  
+
   useEffect(() => {
-    const request = new XMLHttpRequest();
   request.onreadystatechange = e => {
     if (request.readyState !== 4) {
       return;
@@ -64,21 +70,18 @@ export default function App() {
   request.open('GET', apiUrl);
   request.send();
   },[])
-  
-  
 
-  
-  
 
   return (
     <View style={styles.container}>
       <Text>Hello, world!</Text>
       <Button title='camera' onPress={openCamera} ></Button>
       <Button title='gallery' onPress={pickImage} ></Button>
-      {/* <Button title='ddd' onPress={}></Button> */}
+      
 
       {image && <Image source={{ uri: image }} style={styles.image} />}
       {picture && <Image source={{ uri: picture }} style={styles.image} />}
+      <Button title='ddd' onPress={testPost}></Button>
     </View>    
   );
 }
