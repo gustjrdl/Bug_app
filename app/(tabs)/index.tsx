@@ -1,32 +1,45 @@
-import { Text, View, Image, StyleSheet, Button, Platform, TouchableHighlight } from 'react-native';
+import { Text, View, Image, StyleSheet, Button, Platform, TouchableHighlight, ActivityIndicator } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
+import { FlatList } from 'react-native-gesture-handler';
 
 
 
 export default function App() {
 
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+
   const [image, setImage] = useState("");
+  const [picture, setPicture] = useState("");
+  const [isLoading, setLoading] = useState(true);
+  const [data, setData] = useState([]);
+
+  
 
   const openCamera = async () => {
-    let result = await ImagePicker.launchCameraAsync({
+
+      let picture = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
     });
-    console.log(result);
+    
+    console.log(picture);
 
+    if (!picture.canceled) {
+      setPicture(picture.assets[0].uri);
+    }
   };
 
   const pickImage = async () => {
+    
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
       quality: 1,
     })
-
     console.log(result);
 
     if (!result.canceled) {
@@ -34,14 +47,39 @@ export default function App() {
     }
   }
 
+  useEffect(() => {
+    const request = new XMLHttpRequest();
+  request.onreadystatechange = e => {
+    if (request.readyState !== 4) {
+      return;
+    }
+  
+    if (request.status === 200) {
+      console.log('success', request.responseText);
+    } else {
+      console.warn('error');
+    }
+  };
+  
+  request.open('GET', apiUrl);
+  request.send();
+  },[])
+  
+  
+
+  
+  
 
   return (
     <View style={styles.container}>
       <Text>Hello, world!</Text>
       <Button title='camera' onPress={openCamera} ></Button>
-      <Button title='Gallery' onPress={pickImage} ></Button>
-    </View>
-    
+      <Button title='gallery' onPress={pickImage} ></Button>
+      {/* <Button title='ddd' onPress={}></Button> */}
+
+      {image && <Image source={{ uri: image }} style={styles.image} />}
+      {picture && <Image source={{ uri: picture }} style={styles.image} />}
+    </View>    
   );
 }
 
