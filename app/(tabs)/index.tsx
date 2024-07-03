@@ -1,11 +1,8 @@
 import { Text, View, Image, StyleSheet, Button, Platform, TouchableHighlight, ActivityIndicator } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
 import { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
-import { FlatList } from 'react-native-gesture-handler';
+import axios from 'axios';
+import FormData from 'form-data';
 
 
 
@@ -19,8 +16,8 @@ export default function App() {
   const [isLoading, setLoading] = useState(true);
   const [data, setData] = useState([]);
 
-  
 
+  
   const openCamera = async () => {
 
       let picture = await ImagePicker.launchCameraAsync({
@@ -28,8 +25,6 @@ export default function App() {
       quality: 1,
     });
     
-    console.log(picture);
-
     if (!picture.canceled) {
       setPicture(picture.assets[0].uri);
     }
@@ -48,12 +43,37 @@ export default function App() {
     }
   }
 
-  const testPost = async() => {    
-
-    console.log("image:", image);
-    }
   
+  const testPost = async() => {    
+      try {
+          console.log("image:", image);
+  
+          const filename = image.split('/').pop();
+          const match = /\.(\w+)$/.exec(filename ?? '');
+          const type = match ? `image/${match[1]}` : `image`;
 
+          const formData = new FormData();
+          formData.append('file', { uri: image, name: filename, type });
+          formData.append('title', "wpwls");
+  
+          console.log("formdata:", formData);
+          console.log("match:", match);
+  
+          await axios({
+              method: 'post',
+              url: `${apiUrl}/photos/upload`,
+              headers: {
+                  'Content-Type': 'multipart/form-data',
+              },
+              data: formData
+          });
+  
+          console.log("Upload successful");
+      } catch (error) {
+          console.error('Error during file upload:', error);
+      }
+  }
+  
   useEffect(() => {
   request.onreadystatechange = e => {
     if (request.readyState !== 4) {
@@ -67,7 +87,7 @@ export default function App() {
     }
   };
   
-  request.open('GET', apiUrl);
+  request.open('GET', `${apiUrl}/feed`);
   request.send();
   },[])
 
@@ -77,7 +97,6 @@ export default function App() {
       <Text>Hello, world!</Text>
       <Button title='camera' onPress={openCamera} ></Button>
       <Button title='gallery' onPress={pickImage} ></Button>
-      
 
       {image && <Image source={{ uri: image }} style={styles.image} />}
       {picture && <Image source={{ uri: picture }} style={styles.image} />}
