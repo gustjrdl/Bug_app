@@ -1,65 +1,70 @@
-import { Text, View, Image, StyleSheet, Button, Platform, TouchableHighlight, ActivityIndicator } from 'react-native';
-import { useEffect, useState } from 'react';
+import { Text, View, Image, StyleSheet, Button, Platform, TouchableHighlight, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import FormData from 'form-data';
+import { Feather } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system';
 
 
 
 export default function App() {
 
   const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-  const request = new XMLHttpRequest();
 
   const [image, setImage] = useState("");
-  const [picture, setPicture] = useState("");
-  const [isLoading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(false);
   const [data, setData] = useState([]);
+  const [responseMessage, setResponseMessage] = useState('');
 
 
-  
   const openCamera = async () => {
-
-      let picture = await ImagePicker.launchCameraAsync({
+      let result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
     });
     
-    if (!picture.canceled) {
-      setPicture(picture.assets[0].uri);
-    }
-  };
-
-  const pickImage = async () => {
-    
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      quality: 1,
-    })
-    console.log("result:", result);
-
     if (!result.canceled) {
       setImage(result.assets[0].uri);
-    }
+      console.log(result);
+      postImage();
+    } 
+    console.log("result.assets:",result.assets)
+    return <Text></Text>
+  };
+
+  const postPicture = async () => {
+    const filename = image.split('/').pop();
+    const match = /\.(\w+)$/.exec(filename ?? '');
+    const type = match ? `image/${match[1]}` : `image`;
+    
+    const formData = new FormData();
+
+    formData.append('file', { uri: image, name: filename, type });
+    formData.append('title', 'asdsa');
+    
+    console.log("formdata:", formData);
   }
 
-  
-  const testPost = async() => {    
+  const postImage = async() => {     
+    
+    setLoading(true)
       try {
-          console.log("image:", image);
+          console.log("image:", image.split('/'));
   
           const filename = image.split('/').pop();
           const match = /\.(\w+)$/.exec(filename ?? '');
           const type = match ? `image/${match[1]}` : `image`;
-
+          
           const formData = new FormData();
+
           formData.append('file', { uri: image, name: filename, type });
-          formData.append('title', "wpwls");
-  
+          formData.append('title', 'asdsa');
+          
           console.log("formdata:", formData);
-          console.log("match:", match);
-  
-          await axios({
+
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          const response = await axios({
               method: 'post',
               url: `${apiUrl}/photos/upload`,
               headers: {
@@ -67,41 +72,50 @@ export default function App() {
               },
               data: formData
           });
-  
+
+
           console.log("Upload successful");
+          if(response) {
+            setLoading(false);
+            
+            setResponseMessage(response.data.message || 'Upload successful');
+            setImage("");
+          }
+          console.log("resData:",response.data);
       } catch (error) {
-          console.error('Error during file upload:', error);
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          setLoading(false);
+          console.error('파일 전송에 실패하였습니다.', error);
       }
   }
   
-  useEffect(() => {
-  request.onreadystatechange = e => {
-    if (request.readyState !== 4) {
-      return;
+  useEffect(()=>{
+    const getList = async () => {
+      const res = await axios({
+        method: 'get',
+        url:`${apiUrl}/photos/feed`,
+      })
+      setData(res.data);
     }
-  
-    if (request.status === 200) {
-      console.log('success', request.responseText);
-    } else {
-      console.warn('error');
-    }
-  };
-  
-  request.open('GET', `${apiUrl}/feed`);
-  request.send();
+    getList();
   },[])
-
 
   return (
     <View style={styles.container}>
-      <Text>Hello, world!</Text>
-      <Button title='camera' onPress={openCamera} ></Button>
-      <Button title='gallery' onPress={pickImage} ></Button>
+      <TouchableOpacity  style={styles.button} onPress={openCamera} ><Text style={styles.buttonText}>카메라</Text></TouchableOpacity>
+      {/* <TouchableOpacity  style={styles.button} onPress={pickImage} ><Text style={styles.buttonText}>사진첩</Text></TouchableOpacity> */}
+      
+      
+      {image && (<View style={styles.imageContainer}>
+        <Image source={{ uri: image }} style={[styles.image, isLoading && styles.imageLoading]}/>
 
-      {image && <Image source={{ uri: image }} style={styles.image} />}
-      {picture && <Image source={{ uri: picture }} style={styles.image} />}
-      <Button title='ddd' onPress={testPost}></Button>
-    </View>    
+        {isLoading && <ActivityIndicator style={styles.spinner} size="large" color="#0000ff" />}
+
+      </View>) }
+        {!image || <TouchableOpacity onPress={postImage} ><Text>재전송</Text></TouchableOpacity>}
+      
+    </View>
+    
   );
 }
 
@@ -109,11 +123,42 @@ const styles = StyleSheet.create({
   container: {
     flex:1,
     justifyContent:"center",
-    backgroundColor:"tomato",
+    alignItems:"center",
   },
-  image: {
+  button: {
+    width:'40%',
+    height:'20%',
+    backgroundColor: 'rgb(200,0,54)',
+    justifyContent:"center",
+    alignItems:"center",
+    borderRadius:100,
+  },
+  buttonText: {
+    color:'white',
+    fontWeight:'bold',
+  },
+  imageContainer: {
+    position: 'relative',
     width: 200,
     height: 200,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    opacity:1,
+    position: "relative",
+  },
+  imageLoading: {
+    opacity: 0.3,
+  },
+  title: {
+    fontSize: 32,
+  },
+  spinner: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -18 }, { translateY: -18 }] // 스피너를 중앙으로 이동시킴
   },
 
 })
