@@ -3,12 +3,11 @@
   import * as ImagePicker from 'expo-image-picker';
   import axios from 'axios';
   import FormData from 'form-data';
-  import { Feather } from '@expo/vector-icons';
-  import * as FileSystem from 'expo-file-system';
   import { Fontisto } from '@expo/vector-icons';
-  import Canvas from 'react-native-canvas';
+  import {createStackNavigator} from '@react-navigation/stack'
   
 
+  const Stack = createStackNavigator();
   export default function App() {
 
     const apiUrl = process.env.EXPO_PUBLIC_API_URL;
@@ -17,11 +16,9 @@
     const [isLoading, setLoading] = useState(false);
     const [isUpload, setIsUploadImg] = useState(false);
     const [responseMessage, setResponseMessage] = useState('');
-    const [text, setText] = useState('00000000000');
+    const [text, setText] = useState('');// phonenumber state
     const [imageId, setImageId] = useState("");
     const [keyboardVisible, setKeyboardVisible] = useState(false);
-    const [boxes, setDectBox] = useState([]);
-    const [imgSize, setImgSize] = useState({});
 
     useEffect(() => {
       const keyboardDidShowListener = Keyboard.addListener(
@@ -60,7 +57,7 @@
       } 
     };
     
-    const postImage = async(image:string) => { 
+    const postImage = async(image) => { 
         try {
           
           console.log(`image:${image}`);
@@ -86,9 +83,14 @@
 
           );
             setLoading(true);
+
             setIsUploadImg(true);
+
             const imageId = response.data.id;
+
             setImageId(imageId);
+            
+
             pollForImageUrl(imageId);
             
             if(response) {
@@ -103,40 +105,35 @@
         }
     }
     
-    const pollForImageUrl = async(imageId:string)=> {
+    const pollForImageUrl = async(imageId)=> {
 
       console.log(imageId);
       const pollInterval = 1000;
 
       const fetchImageUrl = async () => {  
         try {
-          console.log(`${apiUrl}/api/getResult?detectId=${imageId}`);
           
           const response = await axios({ 
             method:'get',
             url:`${apiUrl}/api/getResult?detectId=${imageId}`,
-          });
-          if (response) {
-            const responseData = JSON.parse(response.data.result);
-            console.log(responseData);
 
+          });
+
+          if (response) {
+            
+            const responseData = `${response.data.result}`;
+
+            const imageUrl = `${apiUrl}${responseData}`
+
+            setImage(imageUrl)
+            
             if(response.data.result === null){
               
               setTimeout(fetchImageUrl, pollInterval);
-              
             }else{
-            
-              console.log('response:',response.data.result);
-            const responseData = JSON.parse(response.data.result);
-            console.log(responseData);
-            setDectBox(responseData.obj);
-            console.log(`responseData.imgsize is ${responseData.imgsize}`)
-            setImgSize(responseData.imgsize);
             setLoading(false);
             }
-
-          } else {      
-            
+          } else {
             setTimeout(fetchImageUrl, pollInterval);
           }
         } catch (error) {
@@ -147,47 +144,25 @@
       fetchImageUrl();
     }
 
-    
-    //TO-DO: 계속 ratio 계산하는거 비효율적임으로 데이터 받았을때 계산해서 ratio 따로 보관(imgSize -> ratio)
-    const calculateBoxStyle  = (box:any,imgSize:any) => {
-      console.log(`box is ${box}`);
-      console.log(`imgSize is ${imgSize}`);
-      return {
-        left:(200/imgSize.width)*box.x,
-        top: (200/imgSize.height)*box.y,
-        width: (200/imgSize.width) * box.width,
-        height: (200/imgSize.height) * box.height,
-      };
-    };
-    
     return (
-  
+      
       <View style={styles.container}>
-        
       <TextInput
       style={styles.input}
       onChangeText={setText}
       value={text}
       placeholder="전화번호를 입력해주세요."
       keyboardType="numeric"
-      maxLength={11} // "010" 포함 최대 10자리
+      maxLength={11} 
       ></TextInput>
         {!keyboardVisible && (<TouchableOpacity  style={styles.cameraButton} onPress={openCamera} ><Fontisto name="camera" size={24} color="white" /></TouchableOpacity>)}
       
       {image && ( <View style={styles.imageContainer}>
         <Image source={{ uri: image }}  resizeMode="stretch" style={[styles.image, isLoading && styles.imageLoading]}/>
         {isLoading && <ActivityIndicator style={styles.spinner} size="large" color="#0000ff" />}
-        {!isLoading && isUpload &&  boxes.map((box, index) => (
-            <View key={index} style={[styles.box, calculateBoxStyle(box,imgSize)]} />
-          ))
-        }
       </View>)}
-      
-      
-      {/* {!image || <TouchableOpacity style={styles.button} onPress={postImage()} ><Text style={styles.buttonText}>재시도</Text></TouchableOpacity>}     */}
+    
       </View>
-
-      
     );  
   }
 
