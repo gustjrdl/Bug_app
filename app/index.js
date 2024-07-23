@@ -74,7 +74,7 @@
             
             const response = await axios({
                 method: 'post',
-                url: `${apiUrl}/api/uploadPhoto`,
+                url: `${apiUrl}/api/phones/upload`,
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -115,7 +115,7 @@
           
           const response = await axios({ 
             method:'get',
-            url:`${apiUrl}/api/getResult?detectId=${imageId}`,
+            url:`${apiUrl}/api/phones/getResult?detectId=${imageId}`,
 
           });
 
