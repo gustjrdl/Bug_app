@@ -1,17 +1,17 @@
 import React, { useState } from "react";
-import {View, Text,  StyleSheet, TextInput} from 'react-native';
+import {View, Text,  StyleSheet, TextInput, TouchableOpacity} from 'react-native';
+import { useSelector } from "react-redux";
 import styled from "styled-components/native";
-
-  
-const Btn = styled.TouchableOpacity`
-    flex: 0.3;
-    justify-content: center;
-    align-items: center;
-`;
+import { RootState } from "../store/rootReducer";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../store/store";
+import { login } from "../store/authSlice";
 
 export default function Login ({navigation:{navigate}}:any){
-  
+
     const [text, setText] = useState("");
+    const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
+    const dispatch = useDispatch<AppDispatch>();
 
     const loginButton = () => {
         if (!text||text.length !== 11) {
@@ -20,6 +20,8 @@ export default function Login ({navigation:{navigate}}:any){
           }
           else{
             navigate("Tabs", {screen:"Main"})
+            !isAuthenticated
+            return dispatch(login(text))
           }
     }
     return (
@@ -32,10 +34,11 @@ export default function Login ({navigation:{navigate}}:any){
                 keyboardType="numeric"
                 maxLength={11} 
                 ></TextInput>
-                <Btn onPress={loginButton}><Text>login</Text></Btn>
+        <TouchableOpacity style={styles.button} onPress={loginButton}><Text style={{color:'white'}}>login</Text></TouchableOpacity>
       </View>
     )
 }
+
 const styles = StyleSheet.create({
     container: {
         flex:1,
@@ -49,4 +52,12 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius:10,
       },
+      button:{
+        width:100,
+        height:50,
+        justifyContent:"center",
+        alignItems:"center",
+        backgroundColor:'rgb(200,0,54)',
+        borderRadius:10,
+      }
 })

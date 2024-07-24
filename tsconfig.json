@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "screens", "app/index.js", "app/index.js", "app/navigation/tabs.jsx", "app/navigation/picture.jsx"  ]
+, "screens", "index.js", "index.js", "app/navigation/tabs.jsx", "app/navigation/picture.jsx"  ]
 }
