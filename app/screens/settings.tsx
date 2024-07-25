@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {View, Text, TouchableOpacity, StyleSheet, Alert} from 'react-native';
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
@@ -13,12 +13,13 @@ export default function Settings ({navigation:{navigate}}:any){
     const user = useSelector((state: RootState) => state.auth.user);
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
     const dispatch = useDispatch<AppDispatch>();
+    const [auth, setAuth] = useState('')
 
     const logoutButton = () => {
-        dispatch(logout(""));
-        !isAuthenticated
-        user.length==0
-        navigate("Stack", {screen:"Login"})
+        dispatch(logout(""))
+            !isAuthenticated
+            console.log(user)
+            navigate("Stack", {screen:"Login"})
     }
 
     return (
