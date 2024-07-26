@@ -12,7 +12,6 @@ export default function Login ({navigation:{navigate}}:any){
     const [text, setText] = useState("");
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
     const dispatch = useDispatch<AppDispatch>();
-    const user = useSelector((state: RootState) => state.auth.user);
 
     const loginButton = () => {
         if (!text||text.length !== 11) {

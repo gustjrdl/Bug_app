@@ -13,10 +13,9 @@ export default function Settings ({navigation:{navigate}}:any){
     const user = useSelector((state: RootState) => state.auth.user);
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
     const dispatch = useDispatch<AppDispatch>();
-    const [auth, setAuth] = useState('')
 
     const logoutButton = () => {
-        dispatch(logout(""))
+        dispatch(logout())
             !isAuthenticated
             console.log(user)
             navigate("Stack", {screen:"Login"})
